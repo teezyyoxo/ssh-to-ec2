@@ -1,5 +1,5 @@
 #!/bin/bash
-# ec2-ssh.sh v1.5.2 - SSH into EC2 using name or ID, now with .env support
+# ec2-ssh.sh v1.5.3 - SSH into EC2 using name or ID, now with .env support
 
 # --- LOAD .ENV BECAUSE PRIVACYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -106,6 +106,8 @@ else
   echo -e "=============================="
   echo "🔐 Connecting..."
   echo "=============================="
+  echo -e "\n..."
+  echo "..."
   ssh -i "$INSTANCE_KEY_PATH" "$SSH_USER@$IP"
   echo ""
   echo "[✅ SSH session ended]"
