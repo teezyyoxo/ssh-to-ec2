@@ -1,5 +1,5 @@
 #!/bin/bash
-# ec2-ssh.sh v1.5.1 - SSH into EC2 using name or ID, now with .env support
+# ec2-ssh.sh v1.5.2 - SSH into EC2 using name or ID, now with .env support
 
 # --- LOAD .ENV BECAUSE PRIVACYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY ---
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -98,14 +98,14 @@ echo "✅ Found instance at $IP"
 echo "Connecting with command:"
 echo "ssh -i \"$INSTANCE_KEY_PATH\" $SSH_USER@$IP"
 echo "=============================="
-
+echo "..."
+echo "..."
 if [ "$DRY_RUN" = true ]; then
   echo "🔧 DRY RUN MODE — no connection attempted."
 else
-  echo -e "\n=============================="
+  echo -e "=============================="
   echo "🔐 Connecting..."
   echo "=============================="
-  echo ""
   ssh -i "$INSTANCE_KEY_PATH" "$SSH_USER@$IP"
   echo ""
   echo "[✅ SSH session ended]"
