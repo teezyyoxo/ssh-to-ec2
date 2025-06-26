@@ -1,29 +1,43 @@
 #!/bin/bash
-# ec2-ssh.sh v1.1.0 - SSH into EC2 using either Name tag or Instance ID
+# ec2-ssh.sh v1.2.0 - SSH into EC2 instance using Name tag or Instance ID from CLI args
 
-# --- CONFIGURATION ---
-INSTANCE_ID_OR_NAME="i-0abcdef1234567890"  # Can be instance ID or Name tag
-KEY_PATH="$HOME/.ssh/my-key.pem"           # Path to your SSH key
-USER="ubuntu"                              # SSH username (ec2-user, ubuntu, admin, etc.)
-REGION="us-east-1"                         # AWS region
-DRY_RUN=false                              # true = only print SSH command
+# --- DEFAULT CONFIG ---
+KEY_PATH="$HOME/.ssh/my-key.pem"  # Path to SSH key
+USER="ubuntu"                     # SSH user (e.g., ubuntu, ec2-user)
+REGION="us-east-1"               # AWS region
+
+# --- USAGE ---
+usage() {
+  echo "Usage: $0 <instance-id or name-tag> [--dry-run]"
+  echo "Example:"
+  echo "  $0 i-0123456789abcdef0"
+  echo "  $0 MyInstanceName --dry-run"
+  exit 1
+}
+
+# --- PARSE ARGUMENTS ---
+if [ $# -lt 1 ]; then usage; fi
+
+INPUT="$1"
+DRY_RUN=false
+[[ "$2" == "--dry-run" ]] && DRY_RUN=true
 
 # --- VALIDATION ---
 if ! command -v aws &> /dev/null; then
-  echo "❌ AWS CLI is not installed."
+  echo "❌ AWS CLI not installed."
   exit 1
 fi
 
-# --- DETERMINE FILTER TYPE ---
-if [[ "$INSTANCE_ID_OR_NAME" =~ ^i-[0-9a-f]{8,}$ ]]; then
-  echo "🔍 Using instance ID: $INSTANCE_ID_OR_NAME"
-  FILTER=(--instance-ids "$INSTANCE_ID_OR_NAME")
+# --- DETECT INSTANCE ID OR NAME ---
+if [[ "$INPUT" =~ ^i-[0-9a-f]{8,}$ ]]; then
+  echo "🔍 Using instance ID: $INPUT"
+  FILTER=(--instance-ids "$INPUT")
 else
-  echo "🔍 Looking for instance with tag Name=$INSTANCE_ID_OR_NAME"
-  FILTER=(--filters "Name=tag:Name,Values=$INSTANCE_ID_OR_NAME" "Name=instance-state-name,Values=running")
+  echo "🔍 Searching for instance with Name tag: \"$INPUT\""
+  FILTER=(--filters "Name=tag:Name,Values=$INPUT" "Name=instance-state-name,Values=running")
 fi
 
-# --- FETCH PUBLIC IP ---
+# --- GET PUBLIC IP ---
 IP=$(aws ec2 describe-instances \
   --region "$REGION" \
   "${FILTER[@]}" \
@@ -31,16 +45,17 @@ IP=$(aws ec2 describe-instances \
   --output text)
 
 if [[ -z "$IP" || "$IP" == "None" ]]; then
-  echo "❌ Could not find a running EC2 instance with that ID or name."
+  echo "❌ No running instance found or instance has no public IP."
   exit 1
 fi
 
-# --- SSH COMMAND ---
-echo "✅ Found public IP: $IP"
+# --- SSH ---
+echo "✅ Found instance at $IP"
 SSH_CMD="ssh -i \"$KEY_PATH\" $USER@$IP"
 
 if [ "$DRY_RUN" = true ]; then
-  echo "🔧 SSH command: $SSH_CMD"
+  echo "🔧 SSH command:"
+  echo "$SSH_CMD"
 else
   echo "🔐 Connecting..."
   eval "$SSH_CMD"
