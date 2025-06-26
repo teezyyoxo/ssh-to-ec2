@@ -1,4 +1,4 @@
-# EC2 SSH Script
+# ssh-to-ec2
 
 A simple Bash script to SSH into an AWS EC2 instance by **instance ID or Name tag**, using the AWS CLI and environment variables stored in a `.env` file.
 
