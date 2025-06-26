@@ -1,11 +1,29 @@
 #!/bin/bash
-# ec2-ssh.sh v1.4.1 - SSH into EC2 using name or ID, using a fixed AWS profile
+# ec2-ssh.sh v1.5.0 - SSH into EC2 using name or ID, now with .env support
 
-# --- USER CONFIGURATION ---
-INSTANCE_KEY_PATH=".pem"   # Path to your SSH private key
-SSH_USER="ubuntu"                           # SSH login username
-REGION="us-east-2"                          # AWS region
-PROFILE="------"                         # Your AWS profile name (configured with aws configure sso. Review with 'aws configure list-profiles'.)
+# --- LOAD .ENV BECAUSE PRIVACYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY ---
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_FILE="$SCRIPT_DIR/.env"
+
+if [[ ! -f "$ENV_FILE" ]]; then
+  echo "❌ .env file not found at $ENV_FILE"
+  exit 1
+fi
+
+# Load the .env
+set -a
+source "$ENV_FILE"
+set +a
+
+# Validate variables in .env
+REQUIRED_VARS=(INSTANCE_KEY_PATH SSH_USER REGION PROFILE)
+
+for var in "${REQUIRED_VARS[@]}"; do
+  if [[ -z "${!var}" ]]; then
+    echo "❌ Missing required variable: $var in .env"
+    exit 1
+  fi
+done
 
 # --- USAGE FUNCTION ---
 usage() {
